@@ -9,7 +9,7 @@ import { BUSY, withTakeLock } from "@/lib/generation/lock";
 import type { RegenerateResult } from "@/lib/generation/regenerate";
 import type { Speaker } from "@/lib/generation/speakers/speaker";
 import { spokenHash } from "@/lib/generation/spoken-hash";
-import { combatLine, COMBAT_VOICE } from "./catalogue";
+import { combatLine } from "./catalogue";
 
 export async function regenerateCombatLine(
   lineId: string,
@@ -20,8 +20,8 @@ export async function regenerateCombatLine(
   if (!line) return { ok: false, failure: { ...failure("bad-request", "Unknown combat line"), status: 404 } };
   const voices = await speaker.voices(BASE_LANG);
   if (voices.error) return { ok: false, failure: failure("auth", voices.error) };
-  const voiceId = voices.ids.get(COMBAT_VOICE);
-  if (!voiceId) return { ok: false, failure: failure("voice-missing", speaker.missing(COMBAT_VOICE)) };
+  const voiceId = voices.ids.get(line.voice);
+  if (!voiceId) return { ok: false, failure: failure("voice-missing", speaker.missing(line.voice)) };
 
   // Combat takes share the quests archive and its backup workflow, under their own frozen paths.
   const result = await withTakeLock("quests", line.file, async (): Promise<RegenerateResult> => {
@@ -31,7 +31,7 @@ export async function regenerateCombatLine(
     });
     if (!speech.ok) return speech;
     const committed = await commitTake("quests", line.file, speech.audio, {
-      lineId, voice: COMBAT_VOICE, voiceId, createdBy,
+      lineId, voice: line.voice, voiceId, createdBy,
       modelId: speech.made.modelId, outputFormat: speech.made.outputFormat,
       settings: speech.made.settings, seed: null,
       provider: speaker.provider, characters: spokenText.length,
@@ -43,7 +43,7 @@ export async function regenerateCombatLine(
     return {
       ok: true, lineId, file: line.file, version: committed.version, bytes: committed.bytes,
       characters: spokenText.length, credits: speech.credits, costUsd: speech.costUsd,
-      seed: null, voice: COMBAT_VOICE, voiceId, spokenText,
+      seed: null, voice: line.voice, voiceId, spokenText,
       dictionaryVersion: speech.made.dictionaryVersion, sharedWith: 0,
     };
   });

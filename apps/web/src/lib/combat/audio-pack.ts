@@ -16,14 +16,16 @@ export function combatAudioToc(): string {
   ].join("\n");
 }
 
-export function combatAudioManifest(voice: string, clips: { key: string; duration: number }[]): string {
+export function combatAudioManifest(sets: { voice: string; clips: { key: string; duration: number }[] }[]): string {
   return [
     "local addon = ...",
     "SpokenCombatAudioPacks = SpokenCombatAudioPacks or {}",
-    "SpokenCombatAudioPacks[addon] = {",
-    `    version = 1, addon = addon, language = "enUS", voice = "${voice}",`,
-    "    clips = {",
-    ...clips.map((clip) => `        { key = "${clip.key}", length = ${clip.duration.toFixed(3)}, format = "mp3" },`),
-    "    },", "}", "",
+    ...sets.flatMap(({ voice, clips }) => [
+      `SpokenCombatAudioPacks[addon .. ":${voice}"] = {`,
+      `    version = 1, addon = addon, language = "enUS", voice = "${voice}",`,
+      "    clips = {",
+      ...clips.map((clip) => `        { key = "${clip.key}", length = ${clip.duration.toFixed(3)}, format = "mp3" },`),
+      "    },", "}", "",
+    ]),
   ].join("\n");
 }

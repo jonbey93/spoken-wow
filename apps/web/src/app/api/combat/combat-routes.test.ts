@@ -7,7 +7,7 @@ vi.mock("@/lib/combat/package", () => ({ combatPackage: mocks.pack }));
 import { POST } from "./regenerate/route";
 import { GET } from "./package/route";
 
-function request(body: unknown = { lineId: "c:nightelf-female-standard:01" }) {
+function request(body: unknown = { lineId: "c:nightelf-female-player:01" }) {
   return new Request("https://spoken.test/api/combat/regenerate", {
     method: "POST", body: JSON.stringify(body), headers: { "Content-Type": "application/json" },
   });
@@ -45,7 +45,7 @@ it("requires the signed-in person's own provider key", async () => {
 it("passes the authenticated actor to recording production", async () => {
   mocks.generate.mockResolvedValue({ ok: true, version: 1 });
   expect((await POST(request())).status).toBe(200);
-  expect(mocks.generate).toHaveBeenCalledWith("c:nightelf-female-standard:01", "actor", { provider: "fish" });
+  expect(mocks.generate).toHaveBeenCalledWith("c:nightelf-female-player:01", "actor", { provider: "fish" });
 });
 
 it("refuses an incomplete download and makes complete packages private", async () => {

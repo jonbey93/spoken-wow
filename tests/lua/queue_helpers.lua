@@ -20,7 +20,7 @@ function M.LoadCombat(stub, addonDirectory)
     _G.SpokenCombatCharacter = nil
     _G.SpokenCombatAudioPacks = {}
     local combat = {}
-    for _, file in ipairs({ "Core", "Audio", "UI/Options", "Events" }) do
+    for _, file in ipairs({ "Core", "Voices", "Audio", "UI/Options", "Events" }) do
         assert(loadfile(addonDirectory .. file .. ".lua"))("Spoken_Combat", combat)
     end
     stub.FireEvent("ADDON_LOADED", "Spoken_Combat")

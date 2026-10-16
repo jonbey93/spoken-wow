@@ -18,7 +18,8 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
   if (!session || !can(await viewerOf(session), "regenerate", BASE_LANG)) notFound();
   return <Contained className="space-y-6 py-8">
     <h1 className="text-2xl font-semibold">Combat Voice</h1>
-    <p className="text-muted-foreground">Fifteen short reactions in the nightelf-female-standard voice.
+    <p className="text-muted-foreground">Combat voices are selected automatically by your character's race and sex.
+      All 16 Classic Era combinations are catalogued; night elf female currently has eight dialogue lines.
       Generate and audition three lines first, then finish the set. Each Generate click spends
       from your active English voice provider using your saved key and settings.</p>
     <CombatRecordings lines={await combatRecordings()} />

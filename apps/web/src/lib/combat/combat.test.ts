@@ -1,8 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { crc32 } from "node:zlib";
 import { readFileSync } from "node:fs";
-import { combatAudioToc } from "./audio-pack";
-import { COMBAT_LINES, COMBAT_VOICE } from "./catalogue";
+import { combatAudioManifest, combatAudioToc } from "./audio-pack";
+import { COMBAT_LINES, COMBAT_VOICES } from "./catalogue";
 import { recordingsZip } from "./zip";
 
 const mocks = vi.hoisted(() => ({
@@ -20,9 +20,11 @@ vi.mock("@/lib/generation/lock", () => ({
 
 import { regenerateCombatLine } from "./regenerate";
 import { combatPackage } from "./package";
+import * as recordings from "./recordings";
 import { spokenHash } from "@/lib/generation/spoken-hash";
 import type { Speaker } from "@/lib/generation/speakers/speaker";
 
+const COMBAT_VOICE = "nightelf-female-player";
 const speak = vi.fn();
 const speaker: Speaker = {
   provider: "fish", modelId: "test-model", seedStrategy: "npc",
@@ -71,6 +73,20 @@ describe("combat recording production", () => {
 });
 
 describe("combat download", () => {
+  it("registers multiple voice sets independently in one sound pack", () => {
+    const manifest = combatAudioManifest(["nightelf-female-player", "dwarf-female-player"].map((voice) => ({
+      voice, clips: [{ key: "01", duration: 2 }],
+    })));
+    expect(manifest).toContain('SpokenCombatAudioPacks[addon .. ":nightelf-female-player"]');
+    expect(manifest).toContain('SpokenCombatAudioPacks[addon .. ":dwarf-female-player"]');
+  });
+
+  it("does not substitute night elf dialogue for the other fifteen voice sets", () => {
+    expect(COMBAT_VOICES).toHaveLength(16);
+    expect(COMBAT_VOICES.filter((voice) => voice.lines.length).map((voice) => voice.id)).toEqual([COMBAT_VOICE]);
+    expect(COMBAT_LINES.every((line) => line.voice === COMBAT_VOICE)).toBe(true);
+  });
+
   it("exports the same independently versioned addon metadata as the source pack", () => {
     const source = readFileSync(new URL("../../../../../addons/SpokenCombatAudio/SpokenCombatAudio.toc", import.meta.url), "utf8");
     expect(combatAudioToc().trimEnd()).toBe(source.replace(/\r\n/g, "\n").trimEnd());
@@ -84,7 +100,7 @@ describe("combat download", () => {
     for (const rows of [recorded().slice(1), recorded().map((r) => ({ ...r, spokenHash: "old" })),
       recorded().map((r) => ({ ...r, durationSec: 7 }))]) {
       mocks.query.mockResolvedValue(rows);
-      await expect(combatPackage()).rejects.toThrow("All 8");
+      await expect(combatPackage()).rejects.toThrow("At least one complete");
     }
     expect(mocks.takePath).not.toHaveBeenCalled();
   });
@@ -102,7 +118,30 @@ describe("combat download", () => {
     expect(zip.toString()).toContain("## Title: Spoken Combat Audio");
     expect(zip.toString()).toContain("local addon = ...\nSpokenCombatAudioPacks = SpokenCombatAudioPacks or {}");
     expect(zip.toString()).toContain('{ key = "01", length = 2.123, format = "mp3" }');
-    expect(zip.toString()).toContain("SpokenCombatAudio/Sounds/Combat/nightelf-female-standard-08.mp3");
+    expect(zip.toString()).toContain("SpokenCombatAudio/Sounds/Combat/nightelf-female-player-08.mp3");
+  });
+
+  it("packages complete sets together and omits an unfinished set", async () => {
+    const nightelf = COMBAT_LINES.map((line) => ({ ...line, version: 2, duration: 2, ready: true, stale: false }));
+    const dwarf = nightelf.map((line) => ({ ...line, voice: "dwarf-female-player",
+      id: line.id.replace(COMBAT_VOICE, "dwarf-female-player"),
+      file: line.file.replace(COMBAT_VOICE, "dwarf-female-player"),
+    }));
+    const spy = vi.spyOn(recordings, "combatRecordings");
+    mocks.takePath.mockResolvedValue({ kind: "file", path: "archived.mp3" });
+    mocks.readFile.mockResolvedValue(Buffer.from("recording"));
+    try {
+      spy.mockResolvedValueOnce([...nightelf, ...dwarf]);
+      const complete = await combatPackage();
+      expect(mocks.takePath).toHaveBeenCalledTimes(16);
+      expect(complete.toString()).toContain('addon .. ":dwarf-female-player"');
+      expect(complete.toString()).toContain("SpokenCombatAudio/Sounds/Combat/dwarf-female-player-08.mp3");
+      mocks.takePath.mockClear();
+      spy.mockResolvedValueOnce([...nightelf, ...dwarf.slice(1)]);
+      const partial = await combatPackage();
+      expect(mocks.takePath).toHaveBeenCalledTimes(8);
+      expect(partial.toString()).not.toContain("dwarf-female-player");
+    } finally { spy.mockRestore(); }
   });
 
   it("does not create a partial package when an archived take is unavailable", async () => {
