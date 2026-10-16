@@ -1,0 +1,37 @@
+{
+  "voice": "nightelf-female-standard",
+  "lines": [
+    {
+      "key": "01",
+      "text": "So much for a peaceful walk."
+    },
+    {
+      "key": "02",
+      "text": "Elune, a little backup?"
+    },
+    {
+      "key": "03",
+      "text": "You interrupted my brooding."
+    },
+    {
+      "key": "04",
+      "text": "I left my patience in Dolanaar."
+    },
+    {
+      "key": "05",
+      "text": "Another volunteer for a bad decision."
+    },
+    {
+      "key": "06",
+      "text": "Well, this escalated rather rudely."
+    },
+    {
+      "key": "07",
+      "text": "I was hoping for a quiet evening."
+    },
+    {
+      "key": "08",
+      "text": "Ten thousand years, and still no manners."
+    }
+  ]
+}

@@ -4,6 +4,16 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- Use the Spoken logo for Combat and Combat Audio in the game's AddOns list.
+
+- Keep combat recordings in a separate Spoken Combat Audio addon, installed and updated
+  independently of Spoken.
+- Add Spoken Combat as a module with its own Combat settings page, an Enable Module
+  switch, a character-specific Speak on Entering Combat switch and a preview button.
+- Add an optional character combat voice: eight female night elf quips, shuffled on
+  combat entry with a 45-second cooldown. It stays outside the narrator and skips while
+  narration plays. Enable it per character and preview it in Spoken settings. Requires
+  the Combat Voice recordings; legacy 1.12, 2.4.3 and 3.3.5 clients are not supported.
 - **The quest pack Spoken suggests for your language links to its download again.** It pointed
   at CurseForge pages that now hold only part of a language's quests; it now opens the one-pack
   download on GitHub. Chinese clients are offered their own pack too, instead of English's.
